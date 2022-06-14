@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{{ pageTitle }}</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/login.css">
+    <style type="text/css">
+		.has-error input, .has-error textarea{
+			border: red solid 1px;
+			margin-bottom: 0px
+		}
+		.has-error input:focus, .has-error textarea:focus{
+			border: red solid 1px;
+		}
+		.has-error {
+			color: red;
+		}
+    </style>
+</head>
+<body class="my-login-page">
+    <section class="h-100">
+        <div class="container h-100">
+        {{{ body }}}
+        </div>
+    </section>
+    <script type="text/javascript" src="/js/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/common.js"></script>
+    {{#if signUpPage}}
+    <script type="text/javascript">
+    $('#signUpForm input').on('keypress', function(){
+        $(this).parent().removeClass('has-error');
+        $('.help-txt').remove();
+    });
+
+    $('#btnSubmit').on('click',function(){
+        var is_valid = true;
+        var inpName = $('#name');
+        var inpEmail = $('#email');
+        var inpPwd = $('#password');
+        var inpCnfPwd = $('#confirm_password');
+        var chkagree = $('#agree:checkbox:checked');
+        $('#signUpForm input').removeClass('has-error');
+        $('.help-txt').remove();
+
+        if(inpName.val() == '') {
+            inpName.parent().addClass('has-error');
+            inpName.focus();
+            inpName.parent().append('<span class="help-txt">Name is required</span>');
+            is_valid = false;
+        }
+        if(inpEmail.val() == '') {
+            inpEmail.parent().addClass('has-error');
+            inpEmail.focus();
+            inpEmail.parent().append('<span class="help-txt">Email is required</span>');
+            is_valid = false;
+        } else if(isEmail(inpEmail.val()) == false) {
+            inpEmail.parent().addClass('has-error');
+            inpEmail.focus();
+            inpEmail.parent().append('<span class="help-txt"> Please enter a valid email</span>');
+            is_valid = false;
+        }
+        if(inpPwd.val() == '') {
+            inpPwd.parent().addClass('has-error');
+            inpPwd.focus();
+            inpPwd.parent().append('<span class="help-txt">Password is required</span>');
+            is_valid = false;
+        } else if (inpPwd.val().length < 6 ){
+            inpPwd.parent().addClass('has-error');
+            inpPwd.focus();
+            inpPwd.parent().append('<span class="help-txt">Password should be atleast 6 charachters</span>');
+            is_valid = false;
+        }
+        if(inpCnfPwd.val() == '') {
+            inpCnfPwd.parent().addClass('has-error');
+            inpCnfPwd.focus();
+            inpCnfPwd.parent().append('<span class="help-txt">Please confirm your password</span>');
+            is_valid = false;
+        } else if (inpPwd.val() != inpCnfPwd.val() ){
+            inpCnfPwd.parent().addClass('has-error');
+            inpCnfPwd.focus();
+            inpCnfPwd.parent().append('<span class="help-txt">Password do not match</span>');
+            is_valid = false;
+        } else if(chkagree.length == 0) {
+            $('#agree').parent().parent().addClass('has-error');
+            $('#agree').focus();
+            $('#errorAgree').show();
+            is_valid = false;
+        }
+        if(is_valid) {
+            var form = $('#signUpForm');
+            var url = form.attr('action');
+            $(this).html('Please wait...');
+            $(this).attr('disabled','disabled');
+            form.submit();
+        } else {
+            return false;
+        }
+    });
+  </script>
+  {{/if}}
+  {{#if loginPage}}
+  <script type="text/javascript">
+    $('#loginForm input').on('keypress', function(){
+        $(this).parent().removeClass('has-error');
+        $('.help-txt').remove();
+    });
+
+    $('#btnLoginSubmit').on('click',function(){
+        var is_valid = true;
+        var inpEmail = $('#inputEmail');
+        var inpPwd = $('#inputPassword');
+        $('#loginForm input').removeClass('has-error');
+        $('.help-txt').remove();
+        if(inpEmail.val() == '') {
+            inpEmail.parent().addClass('has-error');
+            inpEmail.focus();
+            inpEmail.parent().append('<span class="help-txt">Email is required</span>');
+            is_valid = false;
+        } else if(isEmail(inpEmail.val()) == false) {
+            inpEmail.parent().addClass('has-error');
+            inpEmail.focus();
+            inpEmail.parent().append('<span class="help-txt"> Please enter a valid email</span>');
+            is_valid = false;
+        }
+        if(inpPwd.val() == '') {
+            inpPwd.parent().addClass('has-error');
+            inpPwd.focus();
+            inpPwd.parent().append('<span class="help-txt">Password is required</span>');
+            is_valid = false;
+        }
+        if(is_valid) {
+            var form = $('#loginForm');
+            var url = form.attr('action');
+            $(this).html('Please wait...');
+            $(this).attr('disabled','disabled');
+            form.submit();
+        } else {
+            return false;
+        }
+    });
+  </script>
+  {{/if}}
+</body>
+</html>
