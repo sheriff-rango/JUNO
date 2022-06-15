@@ -1,0 +1,11 @@
+<div class="container ">
+    <div class="list-content">
+        <ul *ngFor="let user of content; let i = index" class="listitem">
+        <li>
+            <span>{{i+1}}</span>
+            <span class="item">username: {{user.name}}</span>
+            <span class="item">email: {{user.email}}</span>
+        </li>
+    </ul>
+    </div>
+</div>

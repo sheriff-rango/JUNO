@@ -1,1 +1,0 @@
-cls && yarn build && firebase deploy
