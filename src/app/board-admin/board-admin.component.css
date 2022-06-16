@@ -1,7 +1,7 @@
 .list-content {
-    margin-left: 300px;
     margin-top: 100px;
     overflow-y: auto;
+    width: 100%;
 }
 
 .listitem {
@@ -12,4 +12,8 @@
 .item {
     margin-left: 40px;
     font-size: 20px;
+}
+
+.add-button {
+  margin-left: 40px;
 }

@@ -24,11 +24,14 @@
     "@cosmjs/cosmwasm": "^0.23.1",
     "@cosmjs/crypto": "^0.23.1",
     "@cosmjs/launchpad": "^0.23.1",
+    "@cosmjs/stargate": "^0.27.1",
+    "@cosmjs/cosmwasm-stargate": "^0.27.1",
     "crypto": "^1.0.1",
     "path": "^0.12.7",
     "rxjs": "~6.6.0",
     "stream": "0.0.2",
     "tslib": "^2.0.0",
+    "@keplr-wallet/types": "^0.9.12",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

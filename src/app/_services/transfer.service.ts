@@ -12,10 +12,51 @@ import {
   coins,
 } from '@cosmjs/launchpad';
 import { CosmWasmClient, MsgExecuteContract } from '@cosmjs/cosmwasm';
-import { environment } from 'src/environments/environment';
+import config from 'src/environments/config';
 import { Observable } from 'rxjs';
+import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { GasPrice } from '@cosmjs/stargate';
+import { Keplr } from '@keplr-wallet/types';
 declare let window: any;
 declare let document: any;
+
+export function toMicroAmount(amount: string, coinDecimals: string) {
+  return (
+    Number.parseFloat(amount) * Math.pow(10, Number.parseInt(coinDecimals))
+  );
+}
+
+let savedKeplr: Keplr;
+
+export async function getKeplr(): Promise<Keplr> {
+  let keplr: Keplr | undefined;
+  if (savedKeplr) {
+    keplr = savedKeplr;
+  } else if (window.keplr) {
+    keplr = window.keplr;
+  } else if (document.readyState === 'complete') {
+    keplr = window.keplr;
+  } else {
+    keplr = await new Promise((resolve) => {
+      const documentStateChange = (event: Event) => {
+        if (
+          event.target &&
+          (event.target as Document).readyState === 'complete'
+        ) {
+          resolve(window.keplr);
+          document.removeEventListener('readystatechange', documentStateChange);
+        }
+      };
+
+      document.addEventListener('readystatechange', documentStateChange);
+    });
+  }
+
+  if (!keplr) throw new Error('Keplr not found');
+  if (!savedKeplr) savedKeplr = keplr;
+
+  return keplr;
+}
 
 const httpOptions = {
   headers: new HttpHeaders({
@@ -34,15 +75,12 @@ export interface ExBankBalancesResponse {
 export class TransferService {
   private enable: any;
   client = LcdClient.withExtensions(
-    { apiUrl: environment.restEndpoint, broadcastMode: BroadcastMode.Block },
-    setupAuthExtension,
-    setupBankExtension
+    { apiUrl: config.restEndpoint, broadcastMode: BroadcastMode.Block }
+    // setupAuthExtension,
+    // setupBankExtension
   );
 
-  wasmClient = new CosmWasmClient(
-    environment.restEndpoint,
-    BroadcastMode.Block
-  );
+  wasmClient = new CosmWasmClient(config.restEndpoint, BroadcastMode.Block);
 
   constructor(private http: HttpClient) {
     window.onload = async () => {
@@ -57,21 +95,21 @@ export class TransferService {
           try {
             await window.keplr.experimentalSuggestChain({
               // Chain-id of the Cosmos SDK chain.
-              chainId: environment.chainId,
+              chainId: config.chainId,
               // The name of the chain to be displayed to the user.
-              chainName: environment.chainName,
+              chainName: config.chainName,
               // RPC endpoint of the chain.
-              rpc: environment.rpcEndpoint,
+              rpc: config.rpcEndpoint,
               // REST endpoint of the chain.
-              rest: environment.restEndpoint,
+              rest: config.restEndpoint,
               // Staking coin information
               stakeCurrency: {
                 // Coin denomination to be displayed to the user.
-                coinDenom: environment.denom,
+                coinDenom: config.denom,
                 // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-                coinMinimalDenom: environment.microDenom,
+                coinMinimalDenom: config.microDenom,
                 // # of decimal points to convert minimal denomination to user-facing denomination.
-                coinDecimals: environment.coinDecimals,
+                coinDecimals: config.coinDecimals,
                 // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
                 // You can get id from https://api.coingecko.com/api/v3/coins/list if it is listed.
                 // coinGeckoId: ""
@@ -96,22 +134,22 @@ export class TransferService {
               //   bech32PrefixConsPub: string;
               // }
               bech32Config: {
-                bech32PrefixAccAddr: environment.addressPrefix,
-                bech32PrefixAccPub: `${environment.addressPrefix}pub`,
-                bech32PrefixValAddr: `${environment.addressPrefix}valoper`,
-                bech32PrefixValPub: `${environment.addressPrefix}valoperpub`,
-                bech32PrefixConsAddr: `${environment.addressPrefix}valcons`,
-                bech32PrefixConsPub: `${environment.addressPrefix}valconspub`,
+                bech32PrefixAccAddr: config.addressPrefix,
+                bech32PrefixAccPub: `${config.addressPrefix}pub`,
+                bech32PrefixValAddr: `${config.addressPrefix}valoper`,
+                bech32PrefixValPub: `${config.addressPrefix}valoperpub`,
+                bech32PrefixConsAddr: `${config.addressPrefix}valcons`,
+                bech32PrefixConsPub: `${config.addressPrefix}valconspub`,
               },
               // List of all coin/tokens used in this chain.
               currencies: [
                 {
                   // Coin denomination to be displayed to the user.
-                  coinDenom: environment.denom,
+                  coinDenom: config.denom,
                   // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-                  coinMinimalDenom: environment.microDenom,
+                  coinMinimalDenom: config.microDenom,
                   // # of decimal points to convert minimal denomination to user-facing denomination.
-                  coinDecimals: environment.coinDecimals,
+                  coinDecimals: config.coinDecimals,
                   // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
                   // You can get id from https://api.coingecko.com/api/v3/coins/list if it is listed.
                   // coinGeckoId: ""
@@ -121,9 +159,9 @@ export class TransferService {
               feeCurrencies: [
                 {
                   // Coin denomination to be displayed to the user.
-                  coinDenom: environment.denom,
+                  coinDenom: config.denom,
                   // Actual denom (i.e. uatom, uscrt) used by the blockchain.
-                  coinMinimalDenom: environment.microDenom,
+                  coinMinimalDenom: config.microDenom,
                   // # of decimal points to convert minimal denomination to user-facing denomination.
                   coinDecimals: 6,
                   // (Optional) Keplr can show the fiat value of the coin if a coingecko id is provided.
@@ -142,9 +180,9 @@ export class TransferService {
               // Currently, Keplr doesn't support dynamic calculation of the gas prices based on on-chain data.
               // Make sure that the gas prices are higher than the minimum gas prices accepted by chain validators and RPC/REST endpoint.
               gasPriceStep: {
-                low: environment.gasPrice / 2,
-                average: environment.gasPrice,
-                high: environment.gasPrice * 2,
+                low: config.gasPrice / 2,
+                average: config.gasPrice,
+                high: config.gasPrice * 2,
               },
             });
           } catch {
@@ -155,7 +193,7 @@ export class TransferService {
         }
       }
 
-      await window.keplr.enable(environment.chainId);
+      await window.keplr.enable(config.chainId);
       // const offlineSigner = window.getOfflineSigner(this.chainId);
 
       // You can get the address/public keys by `getAccounts` method.
@@ -166,7 +204,7 @@ export class TransferService {
 
       // Initialize the gaia api with the offline signer that is injected by Keplr extension.
       // const cosmJS = new SigningCosmosClient(
-      //   environment.lightClient,
+      //   config.lightClient,
       //   accounts[0].address,
       //   offlineSigner,
       // );
@@ -176,46 +214,54 @@ export class TransferService {
   // queries
   async getAccount(): Promise<ExBankBalancesResponse> {
     const response: ExBankBalancesResponse = <ExBankBalancesResponse>{};
-    const offlineSigner = window.getOfflineSigner(environment.chainId);
+    const offlineSigner = window.getOfflineSigner(config.chainId);
     const accounts = await offlineSigner.getAccounts();
-    const keys = await offlineSigner?.keplr?.getKey(environment.chainId);
+    const keys = await offlineSigner?.keplr?.getKey(config.chainId);
     response.address = accounts[0].address;
-    response.balance = await this.client.bank.balances(accounts[0].address);
+    // response.balance = await this.client.bank.balances(accounts[0].address);
     response.info = keys;
     return response;
   }
 
-  queryMonster(cont_addr: string, token_id: string): Promise<any> {
-    return this.wasmClient.queryContractSmart(cont_addr, {
-      nft_info: { token_id },
-    });
+  runQuery(contractAddress: string, queryMsg: any): Promise<any> {
+    return this.wasmClient.queryContractSmart(contractAddress, queryMsg);
   }
 
-  queryAllMonsterInfo(cont_addr: string, token_id: string): Promise<any> {
-    return this.wasmClient.queryContractSmart(cont_addr, {
-      all_nft_info: { token_id },
-    });
-  }
+  async runExecute(
+    contractAddress: string,
+    executeMsg: any,
+    option?: { memo?: string; funds?: string }
+    // ): Promise<BroadcastTxResult> {
+  ): Promise<any> {
+    // const keplr = await getKeplr();
+    // await keplr.enable(config.chainId);
+    const offlineSigner = window.getOfflineSigner(config.chainId);
+    // const offlineSigner = await keplr.getOfflineSignerAuto(config.chainId);
+    const accounts = await offlineSigner.getAccounts();
 
-  queryNumOfMonster(cont_addr: string): Promise<any> {
-    return this.wasmClient.queryContractSmart(cont_addr, { num_tokens: {} });
-  }
+    const client = await SigningCosmWasmClient.connectWithSigner(
+      config.rpcEndpoint,
+      offlineSigner,
+      {
+        gasPrice: GasPrice.fromString(
+          `${config['gasPrice']}${config['microDenom']}`
+        ),
+      }
+    );
 
-  // change limit to dynamic
-  queryAllMonsterAddr(cont_addr: string): Promise<any> {
-    return this.wasmClient.queryContractSmart(cont_addr, {
-      all_tokens: { limit: 1000 },
-    });
-  }
-
-  queryCW20Token(cont_addr: string, address: string): Promise<any> {
-    return this.wasmClient.queryContractSmart(cont_addr, {
-      balance: { address },
-    });
-  }
-
-  queryNFTOfferings(cont_addr: string): Promise<any> {
-    return this.wasmClient.queryContractSmart(cont_addr, { get_offerings: {} });
+    return client.execute(
+      accounts[0].address,
+      contractAddress,
+      executeMsg,
+      'auto',
+      option?.memo,
+      option?.funds
+        ? coins(
+            toMicroAmount(option.funds, config['coinDecimals']),
+            config['microDenom']
+          )
+        : undefined
+    );
   }
 
   // execute
@@ -246,7 +292,7 @@ export class TransferService {
   //     },
   //   };
   //   const client = new SigningCosmosClient(
-  //     environment.restEndpoint,
+  //     config.restEndpoint,
   //     accounts[0].address,
   //     offlineSigner
   //   );
@@ -277,7 +323,7 @@ export class TransferService {
   //     },
   //   };
   //   const client = new SigningCosmosClient(
-  //     environment.restEndpoint,
+  //     config.restEndpoint,
   //     accounts[0].address,
   //     offlineSigner
   //   );
@@ -318,7 +364,7 @@ export class TransferService {
   //     },
   //   };
   //   const client = new SigningCosmosClient(
-  //     environment.restEndpoint,
+  //     config.restEndpoint,
   //     accounts[0].address,
   //     offlineSigner
   //   );
@@ -348,7 +394,7 @@ export class TransferService {
   //     },
   //   };
   //   const client = new SigningCosmosClient(
-  //     environment.restEndpoint,
+  //     config.restEndpoint,
   //     accounts[0].address,
   //     offlineSigner
   //   );
@@ -384,7 +430,7 @@ export class TransferService {
   //     },
   //   };
   //   const client = new SigningCosmosClient(
-  //     environment.restEndpoint,
+  //     config.restEndpoint,
   //     accounts[0].address,
   //     offlineSigner
   //   );
@@ -394,7 +440,7 @@ export class TransferService {
   // http requests
   // requestCW20Tokens(address: string): Observable<any> {
   //   return this.http.post<any>(
-  //     environment.cw20faucet,
+  //     config.cw20faucet,
   //     { address: address },
   //     httpOptions
   //   );

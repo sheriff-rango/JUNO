@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { TransferService } from './_services/transfer.service';
 import { TokenStorageService } from './_services/token-storage.service';
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -15,6 +14,7 @@ export class AppComponent {
   username?: string;
   account: any;
 
+  node: Node;
   constructor(
     private tokenStorageService: TokenStorageService,
     private transferService: TransferService
@@ -39,10 +39,31 @@ export class AppComponent {
     window.location.reload();
   }
 
-  connectWallet(): void {
-    this.transferService.getAccount().then((value) => {
-      console.log('account', value);
-      this.account = value;
-    });
+  async connectWallet(): Promise<void> {
+    this.account = await this.transferService.getAccount();
+    // const queryResult = await this.transferService.runQuery(
+    //   'juno1h6ft2tkl5c85ve0c30jnv3cne0fmk4ma3gytqjv36cf78se5faxq977cwk',
+    //   {
+    //     get_white_users: {},
+    //   }
+    // );
+    // console.log('query result', queryResult);
+    // try {
+    //   const executeResult = await this.transferService.runExecute(
+    //     'juno1h6ft2tkl5c85ve0c30jnv3cne0fmk4ma3gytqjv36cf78se5faxq977cwk',
+    //     {
+    //       add_whit_user: {
+    //         user: {
+    //           address: this.account.address,
+    //           email: '',
+    //           name: '',
+    //         },
+    //       },
+    //     }
+    //   );
+    //   console.log('execute result', executeResult);
+    // } catch (e) {
+    //   console.error('execute error', e);
+    // }
   }
 }

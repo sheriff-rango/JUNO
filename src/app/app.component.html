@@ -24,7 +24,7 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" *ngIf="!account || !account.info" (click)="connectWallet()">Connect Wallet</a>
-        <a class="nav-link" *ngIf="account && account.info">{{account.info.name}}</a>
+        <a class="nav-link" *ngIf="account && account.info"  (click)="connectWallet()">{{account.info.name}}</a>
       </li>
     </ul>
 
