@@ -26,6 +26,7 @@ export class MintComponent implements OnInit {
     const mintInfoString: string = window.localStorage.getItem('mint-info');
     if (!mintInfoString) return;
     const mintInfo = JSON.parse(mintInfoString);
+    const isAdmin = JSON.parse(window.localStorage.getItem('isAdmin') || '');
     console.log(mintInfo);
 
     let mintIndexArray: number[] = [];
@@ -39,11 +40,17 @@ export class MintComponent implements OnInit {
     try {
       const executeResult = await this.transferService.runExecute(
         contractAddress,
-        message
+        message,
+        !isAdmin
+          ? {
+              funds: `${+mintInfo.price > 0 ? +mintInfo.price / 1e6 : ''}`,
+            }
+          : null
       );
       console.log('execute result', executeResult);
     } catch (e) {
       console.error('execute error', e);
+      window.alert('transaction failed!');
     }
   }
 }

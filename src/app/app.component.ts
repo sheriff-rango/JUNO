@@ -61,6 +61,7 @@ export class AppComponent {
   }
 
   validateAccountInfo(accountInfo: AccountInfo): boolean {
+    if (!accountInfo) return false;
     return Boolean(accountInfo.address && accountInfo.hash && accountInfo.name);
   }
 
@@ -104,6 +105,7 @@ export class AppComponent {
     console.log('query result', queryResult);
     window.localStorage.setItem('mint-info', JSON.stringify(queryResult));
     this.isAdmin = queryResult.owner === this.account;
+    window.localStorage.setItem('isAdmin', JSON.stringify(this.isAdmin));
 
     // const queryResult = await this.transferService.runQuery(
     //   'juno1h6ft2tkl5c85ve0c30jnv3cne0fmk4ma3gytqjv36cf78se5faxq977cwk',
@@ -134,7 +136,8 @@ export class AppComponent {
   disconnectWallet() {
     this.username = '';
     this.account = '';
-    window.localStorage.removeItem('account-info');
+    this.isAdmin = false;
+    window.localStorage.clear();
     this.router.navigate(['/home']);
   }
 }

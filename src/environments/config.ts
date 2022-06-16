@@ -39,4 +39,4 @@ const config = {
 export default config['juno-uni'];
 
 export const contractAddress =
-  'juno1h6ft2tkl5c85ve0c30jnv3cne0fmk4ma3gytqjv36cf78se5faxq977cwk';
+  'juno1d307yr77etr30g0las6l537a0du566ax58vv23txa4nvh2wccccqzqxe5f';
