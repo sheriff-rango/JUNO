@@ -9,8 +9,10 @@ import { AuthService } from '../_services/auth.service';
 })
 export class RegisterComponent implements OnInit {
   form: any = {
-    username: null,
+    firstName: null,
+    lastName: null,
     email: null,
+    entityID: null,
   };
   isSuccessful = false;
   isSignUpFailed = false;
@@ -21,7 +23,7 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {}
 
   onSubmit(): void {
-    const { username, email } = this.form;
+    const { firstName, lastName, email, entityID } = this.form;
     const storedObjectString = window.localStorage.getItem('account-info');
     const storedObject = storedObjectString
       ? JSON.parse(storedObjectString)
@@ -30,7 +32,14 @@ export class RegisterComponent implements OnInit {
     if (!storedObject) return;
 
     this.authService
-      .register(username, email, storedObject.address, storedObject.hash)
+      .register(
+        firstName,
+        lastName,
+        email,
+        entityID,
+        storedObject.address,
+        storedObject.hash
+      )
       .subscribe({
         next: (data) => {
           console.log('success', data);

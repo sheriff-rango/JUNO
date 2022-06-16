@@ -13,24 +13,46 @@
       novalidate
     >
       <div class="form-group">
-        <label for="username">Username</label>
+        <label for="firstName">First Name</label>
         <input
           type="text"
           class="form-control"
-          name="username"
-          [(ngModel)]="form.username"
+          name="firstName"
+          [(ngModel)]="form.firstName"
           required
           minlength="3"
           maxlength="20"
-          #username="ngModel"
+          #firstName="ngModel"
         />
-        <div class="alert-danger" *ngIf="username.errors && f.submitted">
-          <div *ngIf="username.errors['required']">Username is required</div>
-          <div *ngIf="username.errors['minlength']">
-            Username must be at least 3 characters
+        <div class="alert-danger" *ngIf="firstName.errors && f.submitted">
+          <div *ngIf="firstName.errors['required']">FirstName is required</div>
+          <div *ngIf="firstName.errors['minlength']">
+            First must be at least 3 characters
           </div>
-          <div *ngIf="username.errors['maxlength']">
-            Username must be at most 20 characters
+          <div *ngIf="firstName.errors['maxlength']">
+            First must be at most 20 characters
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input
+          type="text"
+          class="form-control"
+          name="lastName"
+          [(ngModel)]="form.lastName"
+          required
+          minlength="3"
+          maxlength="20"
+          #lastName="ngModel"
+        />
+        <div class="alert-danger" *ngIf="lastName.errors && f.submitted">
+          <div *ngIf="lastName.errors['required']">LastName is required</div>
+          <div *ngIf="lastName.errors['minlength']">
+            LastName must be at least 3 characters
+          </div>
+          <div *ngIf="lastName.errors['maxlength']">
+            LastName must be at most 20 characters
           </div>
         </div>
       </div>
@@ -50,6 +72,20 @@
           <div *ngIf="email.errors['email']">
             Email must be a valid email address
           </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="entityID">EntityID</label>
+        <input
+          type="text"
+          class="form-control"
+          name="entityID"
+          [(ngModel)]="form.entityID"
+          required
+          #entityID="ngModel"
+        />
+        <div class="alert-danger" *ngIf="entityID.errors && f.submitted">
+          <div *ngIf="entityID.errors['required']">EntityID is required</div>
         </div>
       </div>
       <div class="form-group">
