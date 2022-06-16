@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../_services/auth.service';
 
 @Component({
@@ -10,30 +11,34 @@ export class RegisterComponent implements OnInit {
   form: any = {
     username: null,
     email: null,
-    password: null,
-    address: null,
   };
   isSuccessful = false;
   isSignUpFailed = false;
   errorMessage = '';
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {}
 
   onSubmit(): void {
-    const { username, email, password, address } = this.form;
-    console.log('address');
+    const { username, email } = this.form;
+    const storedObjectString = window.localStorage.getItem('account-info');
+    const storedObject = storedObjectString
+      ? JSON.parse(storedObjectString)
+      : null;
 
-    this.authService.register(username, email, password).subscribe({
-      next: (data) => {
-        this.isSuccessful = true;
-        this.isSignUpFailed = false;
-      },
-      error: (err) => {
-        this.errorMessage = err.error.message;
-        this.isSignUpFailed = true;
-      },
-    });
+    if (!storedObject) return;
+
+    this.authService
+      .register(username, email, storedObject.address, storedObject.hash)
+      .subscribe({
+        next: (data) => {
+          console.log('success', data);
+          this.router.navigate(['/mint']);
+        },
+        error: (err) => {
+          console.log('fail', err);
+        },
+      });
   }
 }

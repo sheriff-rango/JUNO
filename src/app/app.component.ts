@@ -1,6 +1,15 @@
 import { Component } from '@angular/core';
+import { Event, NavigationStart, Router } from '@angular/router';
 import { TransferService } from './_services/transfer.service';
 import { TokenStorageService } from './_services/token-storage.service';
+import { UserService } from './_services/user.service';
+import { contractAddress } from 'src/environments/config';
+
+interface AccountInfo {
+  address: string;
+  hash: string;
+  name: string;
+}
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -9,28 +18,40 @@ import { TokenStorageService } from './_services/token-storage.service';
 export class AppComponent {
   private roles: string[] = [];
   isLoggedIn = false;
-  showAdminBoard = false;
-  showModeratorBoard = false;
+  isAdmin = false;
   username?: string;
   account: any;
 
   node: Node;
   constructor(
     private tokenStorageService: TokenStorageService,
-    private transferService: TransferService
-  ) {}
+    private transferService: TransferService,
+    private userService: UserService,
+    private router: Router
+  ) {
+    this.router.events.subscribe((event: Event) => {
+      if (event instanceof NavigationStart) {
+        // console.log('navigation started', event);
+        const url = event.url;
+        switch (url) {
+          case '/register':
+            if (!this.account) this.router.navigate(['/home']);
+            break;
+          case '/mint':
+            if (!this.account) this.router.navigate(['/home']);
+            break;
+        }
+      }
+    });
+  }
 
   ngOnInit(): void {
-    this.isLoggedIn = !!this.tokenStorageService.getToken();
-
-    if (this.isLoggedIn) {
-      const user = this.tokenStorageService.getUser();
-      this.roles = user.roles;
-
-      this.showAdminBoard = this.roles.includes('ROLE_ADMIN');
-      this.showModeratorBoard = this.roles.includes('ROLE_MODERATOR');
-
-      this.username = user.username;
+    const storedObjectString = window.localStorage.getItem('account-info');
+    const storedObject: AccountInfo | null = storedObjectString
+      ? JSON.parse(storedObjectString)
+      : null;
+    if (storedObject) {
+      this.connectWallet(storedObject);
     }
   }
 
@@ -39,8 +60,51 @@ export class AppComponent {
     window.location.reload();
   }
 
-  async connectWallet(): Promise<void> {
-    this.account = await this.transferService.getAccount();
+  validateAccountInfo(accountInfo: AccountInfo): boolean {
+    return Boolean(accountInfo.address && accountInfo.hash && accountInfo.name);
+  }
+
+  async connectWallet(accountInfo?: AccountInfo): Promise<void> {
+    let storeObject: AccountInfo;
+    if (this.validateAccountInfo(accountInfo)) {
+      storeObject = accountInfo;
+      this.username = storeObject.name;
+      this.account = storeObject.address;
+    } else {
+      const account = await this.transferService.getAccount();
+      this.username = account.info.name;
+      this.account = account.address;
+
+      storeObject = {
+        address: this.account,
+        hash: account.hash,
+        name: this.username,
+      };
+    }
+    window.localStorage.setItem('account-info', JSON.stringify(storeObject));
+
+    this.userService
+      .getUserBoard(storeObject.address, storeObject.hash)
+      .subscribe({
+        next: (data) => {
+          const result = JSON.parse(data);
+          const users = result?.users;
+          if (!users || users.length == 0) {
+            this.router.navigate(['/register']);
+          } else {
+            this.router.navigate(['/mint']);
+          }
+        },
+        error: (err) => {},
+      });
+
+    const queryResult = await this.transferService.runQuery(contractAddress, {
+      get_state_info: {},
+    });
+    console.log('query result', queryResult);
+    window.localStorage.setItem('mint-info', JSON.stringify(queryResult));
+    this.isAdmin = queryResult.owner === this.account;
+
     // const queryResult = await this.transferService.runQuery(
     //   'juno1h6ft2tkl5c85ve0c30jnv3cne0fmk4ma3gytqjv36cf78se5faxq977cwk',
     //   {
@@ -65,5 +129,12 @@ export class AppComponent {
     // } catch (e) {
     //   console.error('execute error', e);
     // }
+  }
+
+  disconnectWallet() {
+    this.username = '';
+    this.account = '';
+    window.localStorage.removeItem('account-info');
+    this.router.navigate(['/home']);
   }
 }

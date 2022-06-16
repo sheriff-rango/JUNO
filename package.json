@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --port 3000",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -19,19 +19,19 @@
     "@angular/material": "^10.2.5",
     "@angular/platform-browser": "~10.1.6",
     "@angular/platform-browser-dynamic": "~10.1.6",
-    "@angular/router": "~10.1.6",
+    "@angular/router": "^10.1.6",
     "@chainapsis/cosmosjs": "0.0.3-alpha.3",
     "@cosmjs/cosmwasm": "^0.23.1",
+    "@cosmjs/cosmwasm-stargate": "^0.27.1",
     "@cosmjs/crypto": "^0.23.1",
     "@cosmjs/launchpad": "^0.23.1",
     "@cosmjs/stargate": "^0.27.1",
-    "@cosmjs/cosmwasm-stargate": "^0.27.1",
+    "@keplr-wallet/types": "^0.9.12",
     "crypto": "^1.0.1",
     "path": "^0.12.7",
     "rxjs": "~6.6.0",
     "stream": "0.0.2",
     "tslib": "^2.0.0",
-    "@keplr-wallet/types": "^0.9.12",
     "zone.js": "~0.10.2"
   },
   "devDependencies": {

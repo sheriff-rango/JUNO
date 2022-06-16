@@ -67,6 +67,7 @@ const httpOptions = {
 export interface ExBankBalancesResponse {
   address: String;
   balance: BankBalancesResponse;
+  hash: string;
   info: { [key: string]: any };
 }
 @Injectable({
@@ -217,9 +218,15 @@ export class TransferService {
     const offlineSigner = window.getOfflineSigner(config.chainId);
     const accounts = await offlineSigner.getAccounts();
     const keys = await offlineSigner?.keplr?.getKey(config.chainId);
+    const hash = await window.keplr.signArbitrary(
+      config.chainId,
+      accounts[0].address,
+      accounts[0].address
+    );
     response.address = accounts[0].address;
     // response.balance = await this.client.bank.balances(accounts[0].address);
     response.info = keys;
+    response.hash = hash.signature;
     return response;
   }
 
