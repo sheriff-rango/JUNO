@@ -5,11 +5,16 @@ import { TokenStorageService } from './_services/token-storage.service';
 import { UserService } from './_services/user.service';
 import { contractAddress } from 'src/environments/config';
 
-interface AccountInfo {
+export interface AccountInfo {
   address: string;
   hash: string;
   name: string;
 }
+
+export const validateAccountInfo = (accountInfo: AccountInfo): boolean => {
+  if (!accountInfo) return false;
+  return Boolean(accountInfo.address && accountInfo.hash && accountInfo.name);
+};
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -60,14 +65,9 @@ export class AppComponent {
     window.location.reload();
   }
 
-  validateAccountInfo(accountInfo: AccountInfo): boolean {
-    if (!accountInfo) return false;
-    return Boolean(accountInfo.address && accountInfo.hash && accountInfo.name);
-  }
-
   async connectWallet(accountInfo?: AccountInfo): Promise<void> {
     let storeObject: AccountInfo;
-    if (this.validateAccountInfo(accountInfo)) {
+    if (validateAccountInfo(accountInfo)) {
       storeObject = accountInfo;
       this.username = storeObject.name;
       this.account = storeObject.address;
@@ -102,7 +102,6 @@ export class AppComponent {
     const queryResult = await this.transferService.runQuery(contractAddress, {
       get_state_info: {},
     });
-    console.log('query result', queryResult);
     window.localStorage.setItem('mint-info', JSON.stringify(queryResult));
     this.isAdmin = queryResult.owner === this.account;
     window.localStorage.setItem('isAdmin', JSON.stringify(this.isAdmin));
