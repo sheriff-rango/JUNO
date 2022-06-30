@@ -12,14 +12,14 @@ const rpcEndpoint = "https://rpc.uni.juno.deuslabs.fi:443";
 const CONTRACT_ADDRESS =
   "juno1d307yr77etr30g0las6l537a0du566ax58vv23txa4nvh2wccccqzqxe5f";
 
-const ADMIN = {
+module.exports.ADMIN = {
   mnemonic:
     "sound prevent lock blame review horn junk cupboard enrich south warfare visit",
   address: "juno17zwfyu9z7p6ks7dw4032umr3wwgxz35gypyyp4",
+  hash: "CWuWjdU20nYR7x4HtQqSw2mHLtSJX3uQppGfVywdj8ZD0HYT+dC8zeQ7rSWd2ei9rOHkH7JDv7gao/j7wHiGrw==",
 };
 
 module.exports.generateWallet = async () => {
-  console.log("generate");
   let new_account = await DirectSecp256k1HdWallet.generate(12);
   const junoWallet = await DirectSecp256k1HdWallet.fromMnemonic(
     new_account.secret.data,
@@ -37,7 +37,7 @@ module.exports.addWhiteUser = async (wallet) => {
   if (!wallet || !wallet.address || !wallet.mnemonic) return null;
   const gasPrice = GasPrice.fromString("0.05ujunox");
   const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-    ADMIN.mnemonic,
+    this.ADMIN.mnemonic,
     {
       prefix: "juno",
     }
@@ -58,7 +58,7 @@ module.exports.addWhiteUser = async (wallet) => {
   };
   try {
     const create_result = await sender_client.execute(
-      ADMIN.address,
+      this.ADMIN.address,
       CONTRACT_ADDRESS,
       msg,
       executeFee,
@@ -75,7 +75,7 @@ module.exports.removeWhiteUser = async (wallet) => {
   if (!wallet || !wallet.address || !wallet.mnemonic) return null;
   const gasPrice = GasPrice.fromString("0.05ujunox");
   const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-    ADMIN.mnemonic,
+    this.ADMIN.mnemonic,
     {
       prefix: "juno",
     }
@@ -92,7 +92,7 @@ module.exports.removeWhiteUser = async (wallet) => {
   };
   try {
     const create_result = await sender_client.execute(
-      ADMIN.address,
+      this.ADMIN.address,
       CONTRACT_ADDRESS,
       msg,
       executeFee,
