@@ -1,3 +1,5 @@
+const { assertIsBroadcastTxSuccess, coins } = require("@cosmjs/launchpad");
+
 const { calculateFee, GasPrice } = require("@cosmjs/stargate");
 const { DirectSecp256k1HdWallet } = require("@cosmjs/proto-signing");
 const {
@@ -10,7 +12,7 @@ const _ = require("fs");
 
 const rpcEndpoint = "https://rpc.uni.juno.deuslabs.fi:443";
 const CONTRACT_ADDRESS =
-  "juno1d307yr77etr30g0las6l537a0du566ax58vv23txa4nvh2wccccqzqxe5f";
+  "juno1z85xze7aqu07gemy35ht7yjtctjrpuhplmhfedq4hr3w6740kejqzhq2pt";
 
 module.exports.ADMIN = {
   mnemonic:
@@ -33,11 +35,14 @@ module.exports.generateWallet = async () => {
   };
 };
 
-module.exports.addWhiteUser = async (wallet) => {
+module.exports.addWhiteUser = async (wallet, callerWallet) => {
   if (!wallet || !wallet.address || !wallet.mnemonic) return null;
   const gasPrice = GasPrice.fromString("0.05ujunox");
   const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-    this.ADMIN.mnemonic,
+    // this.ADMIN.mnemonic,
+    callerWallet.hash === this.ADMIN.hash
+      ? this.ADMIN.mnemonic
+      : callerWallet.mnemonic,
     {
       prefix: "juno",
     }
@@ -48,7 +53,7 @@ module.exports.addWhiteUser = async (wallet) => {
   );
   const executeFee = calculateFee(500_000, gasPrice);
   const msg = {
-    add_whit_user: {
+    add_white_user: {
       user: {
         name: "",
         address: wallet.address,
@@ -56,9 +61,13 @@ module.exports.addWhiteUser = async (wallet) => {
       },
     },
   };
+  console.log("message", msg);
   try {
     const create_result = await sender_client.execute(
-      this.ADMIN.address,
+      // this.ADMIN.address,
+      callerWallet.hash === this.ADMIN.hash
+        ? this.ADMIN.address
+        : callerWallet.address,
       CONTRACT_ADDRESS,
       msg,
       executeFee,
@@ -67,15 +76,19 @@ module.exports.addWhiteUser = async (wallet) => {
     );
     return create_result;
   } catch (e) {
+    console.log("here", e);
     return null;
   }
 };
 
-module.exports.removeWhiteUser = async (wallet) => {
+module.exports.removeWhiteUser = async (wallet, callerWallet) => {
   if (!wallet || !wallet.address || !wallet.mnemonic) return null;
   const gasPrice = GasPrice.fromString("0.05ujunox");
   const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-    this.ADMIN.mnemonic,
+    // this.ADMIN.mnemonic,
+    callerWallet.hash === this.ADMIN.hash
+      ? this.ADMIN.mnemonic
+      : callerWallet.mnemonic,
     {
       prefix: "juno",
     }
@@ -92,7 +105,10 @@ module.exports.removeWhiteUser = async (wallet) => {
   };
   try {
     const create_result = await sender_client.execute(
-      this.ADMIN.address,
+      // this.ADMIN.address,
+      callerWallet.hash === this.ADMIN.hash
+        ? this.ADMIN.address
+        : callerWallet.address,
       CONTRACT_ADDRESS,
       msg,
       executeFee,
@@ -101,6 +117,62 @@ module.exports.removeWhiteUser = async (wallet) => {
     );
     return create_result;
   } catch (e) {
+    console.log(e);
     return null;
   }
+};
+
+function toMicroAmount(amount, coinDecimals) {
+  return (
+    Number.parseFloat(amount) * Math.pow(10, Number.parseInt(coinDecimals))
+  );
+}
+
+module.exports.getToken = async (wallet, amount) => {
+  if (!wallet || !wallet.address || !wallet.mnemonic) return null;
+  const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
+    // this.ADMIN.mnemonic,
+    wallet.mnemonic,
+    {
+      prefix: "juno",
+    }
+  );
+  console.log("from wallet", wallet);
+  const sender_client = await SigningCosmWasmClient.connectWithSigner(
+    rpcEndpoint,
+    sender_wallet,
+    {
+      gasPrice: GasPrice.fromString("0.025ujunox"),
+    }
+  );
+  const result = await sender_client.sendTokens(
+    wallet.address,
+    this.ADMIN.address,
+    coins(toMicroAmount("" + amount, "6"), "ujunox"),
+    "auto",
+    ""
+  );
+  assertIsBroadcastTxSuccess({
+    transactionHash: result.transactionHash,
+    height: result.height,
+    code: result.code,
+    rawLog: result.rawLog || "",
+  });
+};
+
+module.exports.getBalance = async (address) => {
+  const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
+    this.ADMIN.mnemonic,
+    {
+      prefix: "juno",
+    }
+  );
+  const sender_client = await SigningCosmWasmClient.connectWithSigner(
+    rpcEndpoint,
+    sender_wallet,
+    {
+      gasPrice: GasPrice.fromString("0.025ujunox"),
+    }
+  );
+  return sender_client.getBalance(address, "ujunox");
 };

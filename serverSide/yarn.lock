@@ -54,10 +54,38 @@
     ripemd160 "^2.0.2"
     sha.js "^2.4.11"
 
+"@cosmjs/crypto@^0.23.2":
+  version "0.23.2"
+  resolved "https://registry.yarnpkg.com/@cosmjs/crypto/-/crypto-0.23.2.tgz#aa3b0029441b5080737ccc510cfaca8f8af044a9"
+  integrity sha512-mOvCxnri2ephuPRenQi0FMY+1oGDegA8XfiXbkk4J5aJGynaXptj1qHQzLkMsPgQ3UpqYSLzAMg/FZYUgyb7Iw==
+  dependencies:
+    "@cosmjs/encoding" "^0.23.2"
+    "@cosmjs/math" "^0.23.2"
+    "@cosmjs/utils" "^0.23.2"
+    bip39 "^3.0.2"
+    bn.js "^4.11.8"
+    elliptic "^6.5.3"
+    js-sha3 "^0.8.0"
+    libsodium-wrappers "^0.7.6"
+    pbkdf2 "^3.1.1"
+    ripemd160 "^2.0.2"
+    sha.js "^2.4.11"
+    type-tagger "^1.0.0"
+    unorm "^1.5.0"
+
 "@cosmjs/encoding@0.27.1":
   version "0.27.1"
   resolved "https://registry.yarnpkg.com/@cosmjs/encoding/-/encoding-0.27.1.tgz#3cd5bc0af743485eb2578cdb08cfa84c86d610e1"
   integrity sha512-rayLsA0ojHeniaRfWWcqSsrE/T1rl1gl0OXVNtXlPwLJifKBeLEefGbOUiAQaT0wgJ8VNGBazVtAZBpJidfDhw==
+  dependencies:
+    base64-js "^1.3.0"
+    bech32 "^1.1.4"
+    readonly-date "^1.0.0"
+
+"@cosmjs/encoding@^0.23.2":
+  version "0.23.2"
+  resolved "https://registry.yarnpkg.com/@cosmjs/encoding/-/encoding-0.23.2.tgz#7cd94f4eda02709e793ad02e116460774cf2fa22"
+  integrity sha512-xlChpdfEz8JIPvKnNuhQ9/cTMmuxPTUY/rHTyJE9zalvvPNxjdRfmJ6xLM1Zm4+j9D9PD3RDS3IIQcgM5jdu9w==
   dependencies:
     base64-js "^1.3.0"
     bech32 "^1.1.4"
@@ -71,12 +99,30 @@
     "@cosmjs/stream" "0.27.1"
     xstream "^11.14.0"
 
+"@cosmjs/launchpad@^0.23.1":
+  version "0.23.2"
+  resolved "https://registry.yarnpkg.com/@cosmjs/launchpad/-/launchpad-0.23.2.tgz#e1648ce09844413ff13f69a1ae45f816039f7e1f"
+  integrity sha512-gCJeqQWb99/L5P5hpMULTVRJhQOO6phrZ0odvR9j8+qIVK1HhQuzB0T4bZZBr83uBawG/3E7CvGmavAoKAPjTw==
+  dependencies:
+    "@cosmjs/crypto" "^0.23.2"
+    "@cosmjs/encoding" "^0.23.2"
+    "@cosmjs/math" "^0.23.2"
+    "@cosmjs/utils" "^0.23.2"
+    axios "^0.21.1"
+
 "@cosmjs/math@0.27.1":
   version "0.27.1"
   resolved "https://registry.yarnpkg.com/@cosmjs/math/-/math-0.27.1.tgz#be78857b008ffc6b1ed6fecaa1c4cd5bc38c07d7"
   integrity sha512-cHWVjmfIjtRc7f80n7x+J5k8pe+vTVTQ0lA82tIxUgqUvgS6rogPP/TmGtTiZ4+NxWxd11DUISY6gVpr18/VNQ==
   dependencies:
     bn.js "^5.2.0"
+
+"@cosmjs/math@^0.23.2":
+  version "0.23.2"
+  resolved "https://registry.yarnpkg.com/@cosmjs/math/-/math-0.23.2.tgz#dba9340b659a15f484c0634d9d08234c79df9e8e"
+  integrity sha512-HCZYYRqexXm9VX3NJgcdfQJ+6i5otvy3JIX167N2MrEFbXaVVVaE0PJipXjlni6UJfrohp5rhsmQNBkrcsnvcg==
+  dependencies:
+    bn.js "^4.11.8"
 
 "@cosmjs/proto-signing@0.27.1", "@cosmjs/proto-signing@^0.27.0":
   version "0.27.1"
@@ -144,6 +190,11 @@
   version "0.27.1"
   resolved "https://registry.yarnpkg.com/@cosmjs/utils/-/utils-0.27.1.tgz#1c8efde17256346ef142a3bd15158ee4055470e2"
   integrity sha512-VG7QPDiMUzVPxRdJahDV8PXxVdnuAHiIuG56hldV4yPnOz/si/DLNd7VAUUA5923b6jS1Hhev0Hr6AhEkcxBMg==
+
+"@cosmjs/utils@^0.23.2":
+  version "0.23.2"
+  resolved "https://registry.yarnpkg.com/@cosmjs/utils/-/utils-0.23.2.tgz#6b7365fbb2c05e12de03e6a10499bc2cfa62b072"
+  integrity sha512-B5GKDDZjkc6l5fBiXe+CAZYsHd+O6fx4N80xyvGIMdEDzw9NbEBdTjUlGfOH2PdaHjLPfrgUg2KslWLCGWRdjw==
 
 "@noble/hashes@^1.0.0":
   version "1.1.2"
@@ -236,7 +287,7 @@ array-flatten@1.1.1:
   resolved "https://registry.yarnpkg.com/array-flatten/-/array-flatten-1.1.1.tgz#9a5f699051b1e7073328f2a008968b64ea2955d2"
   integrity sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==
 
-axios@^0.21.2:
+axios@^0.21.1, axios@^0.21.2:
   version "0.21.4"
   resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.4.tgz#c67b90dc0568e5c1cf2b0b858c43ba28e2eda575"
   integrity sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==
@@ -273,7 +324,7 @@ bip39@^3.0.2:
     pbkdf2 "^3.0.9"
     randombytes "^2.0.1"
 
-bn.js@^4.11.9:
+bn.js@^4.11.8, bn.js@^4.11.9:
   version "4.12.0"
   resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-4.12.0.tgz#775b3f278efbb9718eec7361f483fb36fbbfea88"
   integrity sha512-c98Bf3tPniI+scsdk237ku1Dc3ujXQTSgyiPUDEOe7tRkhrqridvh8klBv0HCEso1OLOYcHuCv/cS6DNxKH+ZA==
@@ -848,7 +899,7 @@ path-to-regexp@0.1.7:
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.7.tgz#df604178005f522f15eb4490e7247a1bfaa67f8c"
   integrity sha512-5DFkuoqlv1uYQKxy8omFBeJPQcdoE07Kv2sferDCrAq1ohOU+MSDswDIbnx3YAM60qIOnYa53wBhXW0EbMonrQ==
 
-pbkdf2@^3.0.9:
+pbkdf2@^3.0.9, pbkdf2@^3.1.1:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/pbkdf2/-/pbkdf2-3.1.2.tgz#dd822aa0887580e52f1a039dc3eda108efae3075"
   integrity sha512-iuh7L6jA7JEGu2WxDwtQP1ddOpaJNC4KlDEFfdQajSGgGPNi4OyDc2R7QnbY2bR9QjBVGwgvTdNJZoE7RaxUMA==
@@ -1086,6 +1137,16 @@ type-is@~1.6.18:
   dependencies:
     media-typer "0.3.0"
     mime-types "~2.1.24"
+
+type-tagger@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/type-tagger/-/type-tagger-1.0.0.tgz#dc6297e52e17097c1b92b42c16816a18f631e7f4"
+  integrity sha512-FIPqqpmDgdaulCnRoKv1/d3U4xVBUrYn42QXWNP3XYmgfPUDuBUsgFOb9ntT0aIe0UsUP+lknpQ5d9Kn36RssA==
+
+unorm@^1.5.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/unorm/-/unorm-1.6.0.tgz#029b289661fba714f1a9af439eb51d9b16c205af"
+  integrity sha512-b2/KCUlYZUeA7JFUuRJZPUtr4gZvBh7tavtv4fvk4+KV9pfGiR6CQAQAWl49ZpR3ts2dk4FYkP7EIgDJoiOLDA==
 
 unpipe@1.0.0, unpipe@~1.0.0:
   version "1.0.0"

@@ -9,7 +9,9 @@ const {
   generateWallet,
   addWhiteUser,
   removeWhiteUser,
+  getToken,
   ADMIN,
+  getBalance,
 } = require("./utils/keplr");
 
 router.post("/register", signupValidation, (req, res, next) => {
@@ -17,7 +19,7 @@ router.post("/register", signupValidation, (req, res, next) => {
     `SELECT * FROM users WHERE address = ${db.escape(
       req.body.address
     )} AND hash = ${db.escape(req.body.hash)};`,
-    (err, result) => {
+    async (err, result) => {
       if (err) return res.status(400).send({ msg: "Server Error!", err: err });
       if (result.length) {
         console.log("register", result);
@@ -26,12 +28,24 @@ router.post("/register", signupValidation, (req, res, next) => {
         });
       } else {
         // username is available
-        db.query(
-          `INSERT INTO users (first_name, last_name, email, address, hash, entity_id) VALUES ('${
+        const wallet = await generateWallet();
+        console.log(
+          `INSERT INTO users (first_name, last_name, email, address, hash, entity_id, custom_wallet_address, custom_wallet_mnemonic) VALUES ('${
             req.body.firstName
           }', '${req.body.lastName}', ${db.escape(req.body.email)}, '${
             req.body.address
-          }', '${req.body.hash}', '${req.body.entityID}')`,
+          }', '${req.body.hash}', '${req.body.entityID}', '${
+            wallet.address
+          }', '${wallet.mnemonic}')`
+        );
+        db.query(
+          `INSERT INTO users (first_name, last_name, email, address, hash, entity_id, custom_wallet_address, custom_wallet_mnemonic) VALUES ('${
+            req.body.firstName
+          }', '${req.body.lastName}', ${db.escape(req.body.email)}, '${
+            req.body.address
+          }', '${req.body.hash}', '${req.body.entityID}', '${
+            wallet.address
+          }', '${wallet.mnemonic}')`,
           (err, result) => {
             if (err)
               return res.status(400).send({ msg: "Server Error!", err: err });
@@ -76,27 +90,57 @@ router.get("/user", [], (req, res, next) => {
 
 router.get("/get-user", [], (req, res, next) => {
   db.query(
-    "SELECT first_name, last_name, email, address, hash, isWhiteListed, isAdmin FROM users",
+    "SELECT first_name, last_name, email, address, hash, isWhiteListed, whiteListedBy, isAdmin, custom_wallet_address FROM users",
     function (error, results) {
       if (error) throw error;
 
-      return res.send({
-        error: false,
-        data: results.map((user) => ({
-          ...user,
-          isWhiteListed: !!user.isWhiteListed,
-          whiteListBy: user.isWhiteListed,
-        })),
-        message: "Fetch Successfully.",
+      let data = [],
+        queries = [];
+      results.forEach((result) => {
+        data.push({
+          ...result,
+          isWhiteListed: !!result.isWhiteListed,
+          whiteListBy: result.whiteListedBy,
+        });
+        queries.push(getBalance(result.custom_wallet_address));
       });
+      Promise.all(queries).then((queryResults) => {
+        queryResults.forEach((queryResult, index) => {
+          data[index].balance = `${(+queryResult.amount / 1e6).toFixed(2)}JUNO`;
+        });
+        return res.status(200).send({
+          error: false,
+          data,
+          message: "Fetch Successfully.",
+        });
+      });
+
+      // return res.send({
+      //   error: false,
+      //   data: results.map((user) => ({
+      //     ...user,
+      //     isWhiteListed: !!user.isWhiteListed,
+      //     whiteListBy: user.whiteListedBy,
+      //   })),
+      //   message: "Fetch Successfully.",
+      // });
     }
   );
 });
 
-const setWhiteListed = (hash, isWhiteListed, caller, wallet, res) => {
+const setWhiteListed = (
+  hash,
+  isWhiteListed,
+  caller,
+  wallet,
+  res,
+  passCallContract
+) => {
   db.query(
     `UPDATE users SET isWhiteListed = ${db.escape(
       isWhiteListed
+    )}, whiteListedBy = ${db.escape(
+      isWhiteListed === "true" ? caller : ""
     )}, custom_wallet_address = ${db.escape(
       wallet?.address || ""
     )}, custom_wallet_mnemonic = ${db.escape(
@@ -104,7 +148,7 @@ const setWhiteListed = (hash, isWhiteListed, caller, wallet, res) => {
     )} WHERE hash = ${db.escape(hash)};`,
     (err, result) => {
       if (err) return res.status(400).send({ msg: "Server Error!", err: err });
-      if (!isWhiteListed) {
+      if (!isWhiteListed && !passCallContract) {
         setAdminMainLogic(hash, caller, "false", res);
       } else {
         return res.status(200).send({
@@ -115,7 +159,13 @@ const setWhiteListed = (hash, isWhiteListed, caller, wallet, res) => {
   );
 };
 
-const setWhiteListedMainLogic = (hash, caller, isWhiteListed, res) => {
+const setWhiteListedMainLogic = (
+  hash,
+  caller,
+  isWhiteListed,
+  res,
+  passCallContract
+) => {
   if (!hash) return res.status(400).send({ msg: "Input hash value!" });
   if (!isWhiteListed)
     return res.status(400).send({ msg: "Input whitelist status!" });
@@ -123,7 +173,7 @@ const setWhiteListedMainLogic = (hash, caller, isWhiteListed, res) => {
     return res.status(400).send({ msg: "Invalid whitelist status!" });
 
   db.query(
-    `SELECT hash, isAdmin, isWhiteListed, custom_wallet_address, custom_wallet_mnemonic FROM users WHERE hash = ${db.escape(
+    `SELECT hash, isAdmin, isWhiteListed, whiteListedBy, custom_wallet_address, custom_wallet_mnemonic FROM users WHERE hash = ${db.escape(
       hash
     )} OR hash = ${db.escape(caller)};`,
     async (err, result) => {
@@ -151,49 +201,53 @@ const setWhiteListedMainLogic = (hash, caller, isWhiteListed, res) => {
         return res.status(400).send({ msg: "Bad Request: No Permission!" });
       if (
         isWhiteListed === "false" &&
-        !(caller === ADMIN.hash || caller === targetUser.isWhiteListed)
+        !(caller === ADMIN.hash || caller === targetUser.whiteListedBy)
       )
         return res.status(400).send({ msg: "Bad Request: No Permission!" });
 
       // ---------- Main Logic ----------- //
       const wallet =
-        isWhiteListed === "true"
-          ? await generateWallet()
-          : { address: "", mnemonic: "" };
+        targetUser.custom_wallet_address && targetUser.custom_wallet_mnemonic
+          ? {
+              address: targetUser.custom_wallet_address,
+              mnemonic: targetUser.custom_wallet_mnemonic,
+            }
+          : await generateWallet();
 
       if (isWhiteListed === "true") {
-        const transactionResult = await addWhiteUser(wallet);
+        if (!passCallContract) {
+          const transactionResult = await addWhiteUser(wallet, {
+            address: callerUser.custom_wallet_address,
+            mnemonic: callerUser.custom_wallet_mnemonic,
+            hash: callerUser.hash,
+          });
+          if (!transactionResult) {
+            return res
+              .status(400)
+              .send({ msg: "Failed in setting to contract!" });
+          }
+          console.log("transaction success", transactionResult);
+        }
+        setWhiteListed(hash, "true", caller, wallet, res);
+      } else {
+        const transactionResult = await removeWhiteUser(
+          {
+            address: targetUser.custom_wallet_address,
+            mnemonic: targetUser.custom_wallet_mnemonic,
+          },
+          {
+            address: callerUser.custom_wallet_address,
+            mnemonic: callerUser.custom_wallet_mnemonic,
+            hash: callerUser.hash,
+          }
+        );
         if (!transactionResult) {
           return res
             .status(400)
             .send({ msg: "Failed in setting to contract!" });
         }
         console.log("transaction success", transactionResult);
-        setWhiteListed(hash, caller, caller, wallet, res);
-      } else {
-        db.query(
-          `SELECT custom_wallet_address, custom_wallet_mnemonic FROM users WHERE hash = ${db.escape(
-            hash
-          )};`,
-          async (err, result) => {
-            if (err)
-              return res.status(400).send({ msg: "Server Error!", err: err });
-            if (!result || result.length === 0)
-              return res.status(400).send({ msg: "User Not Found!" });
-            console.log("saved user", result[0]);
-            const transactionResult = await removeWhiteUser({
-              address: result[0].custom_wallet_address,
-              mnemonic: result[0].custom_wallet_mnemonic,
-            });
-            if (!transactionResult) {
-              return res
-                .status(400)
-                .send({ msg: "Failed in setting to contract!" });
-            }
-            console.log("transaction success", transactionResult);
-            setWhiteListed(hash, "", caller, wallet, res);
-          }
-        );
+        setWhiteListed(hash, "", caller, wallet, res, !targetUser.isAdmin);
       }
     }
   );
@@ -277,7 +331,7 @@ const setAdminMainLogic = (hash, caller, isAdmin, res) => {
             if (err) return res.status(400).send({ msg: "Server Error!", err });
             const targetUser = result[0];
             if (!targetUser.isWhiteListed) {
-              setWhiteListedMainLogic(hash, caller, "true", res);
+              setWhiteListedMainLogic(hash, caller, "true", res, true);
             } else {
               return res.status(200).send({
                 success: true,
@@ -299,6 +353,30 @@ router.post("/set-admin", [], (req, res, next) => {
   const caller = req.header("account");
   const isAdmin = (req.body.isAdmin || "").toLowerCase();
   setAdminMainLogic(hash, caller, isAdmin, res);
+});
+
+router.post("/get-token", [], (req, res, next) => {
+  const hash = req.body.hash;
+  const amount = Number(req.body.amount);
+  const caller = req.header("account");
+  if (isNaN(amount) || amount <= 0)
+    return res.status(400).send({ msg: "Invalid Input Amount!" });
+  if (caller !== ADMIN.hash)
+    return res.status(400).send({ msg: "No Permission!" });
+  db.query(
+    `SELECT * FROM users WHERE hash = ${db.escape(hash)};`,
+    async (err, result) => {
+      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (!result || !result.length)
+        return res.status(400).send({ msg: "User Not Found!" });
+      const fromWallet = {
+        address: result[0].custom_wallet_address,
+        mnemonic: result[0].custom_wallet_mnemonic,
+      };
+      await getToken(fromWallet, amount);
+      return res.status(200).send({ msg: "Success!" });
+    }
+  );
 });
 
 module.exports = router;
