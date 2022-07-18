@@ -20,7 +20,7 @@ router.post("/register", signupValidation, (req, res, next) => {
       req.body.address
     )} AND hash = ${db.escape(req.body.hash)};`,
     async (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       if (result.length) {
         console.log("register", result);
         return res.status(409).send({
@@ -47,8 +47,7 @@ router.post("/register", signupValidation, (req, res, next) => {
             wallet.address
           }', '${wallet.mnemonic}')`,
           (err, result) => {
-            if (err)
-              return res.status(400).send({ msg: "Server Error!", err: err });
+            if (err) return res.status(400).send(err.message);
 
             return res.status(201).send({
               msg: "The user has been registerd with us!",
@@ -71,7 +70,7 @@ router.get("/user", [], (req, res, next) => {
       address
     )} AND hash = ${db.escape(hash)};`,
     (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       return res.send({
         success: true,
         users: result.map((item) => {
@@ -105,6 +104,7 @@ router.get("/get-user", [], (req, res, next) => {
         queries.push(getBalance(result.custom_wallet_address));
       });
       Promise.all(queries).then((queryResults) => {
+        console.log("queryResults", queryResults);
         queryResults.forEach((queryResult, index) => {
           data[index].balance = `${(+queryResult.amount / 1e6).toFixed(2)}JUNO`;
         });
@@ -147,7 +147,7 @@ const setWhiteListed = (
       wallet?.mnemonic || ""
     )} WHERE hash = ${db.escape(hash)};`,
     (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       if (!isWhiteListed && !passCallContract) {
         setAdminMainLogic(hash, caller, "false", res);
       } else {
@@ -177,7 +177,7 @@ const setWhiteListedMainLogic = (
       hash
     )} OR hash = ${db.escape(caller)};`,
     async (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       if (!result || !result.length)
         return res.status(400).send({ msg: "User Not Found!" });
 
@@ -269,7 +269,7 @@ router.post("/set-password", [], (req, res, next) => {
   db.query(
     `SELECT * FROM users WHERE hash = ${db.escape(hash)};`,
     (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       const user = result[0];
       if (!user) return res.status(400).send({ msg: "User does not exist!" });
       if (user.password)
@@ -279,8 +279,7 @@ router.post("/set-password", [], (req, res, next) => {
           password
         )} WHERE hash = ${db.escape(hash)};`,
         (err, result) => {
-          if (err)
-            return res.status(400).send({ msg: "Server Error!", err: err });
+          if (err) return res.status(400).send(err.message);
           return res.status(200).send({
             success: true,
           });
@@ -299,7 +298,7 @@ router.post("/whitelist-login", [], (req, res, next) => {
   db.query(
     `SELECT * FROM users WHERE hash = ${db.escape(hash)};`,
     (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       const user = result[0];
       if (!user) return res.status(400).send({ msg: "User does not exist!" });
       if (!user.password)
@@ -323,12 +322,12 @@ const setAdminMainLogic = (hash, caller, isAdmin, res) => {
       hash
     )};`,
     (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       if (isAdmin === "true") {
         db.query(
           `SELECT isWhiteListed FROM users WHERE hash = ${db.escape(hash)};`,
           async (err, result) => {
-            if (err) return res.status(400).send({ msg: "Server Error!", err });
+            if (err) return res.status(400).send(err.message);
             const targetUser = result[0];
             if (!targetUser.isWhiteListed) {
               setWhiteListedMainLogic(hash, caller, "true", res, true);
@@ -366,15 +365,19 @@ router.post("/get-token", [], (req, res, next) => {
   db.query(
     `SELECT * FROM users WHERE hash = ${db.escape(hash)};`,
     async (err, result) => {
-      if (err) return res.status(400).send({ msg: "Server Error!", err: err });
+      if (err) return res.status(400).send(err.message);
       if (!result || !result.length)
         return res.status(400).send({ msg: "User Not Found!" });
       const fromWallet = {
         address: result[0].custom_wallet_address,
         mnemonic: result[0].custom_wallet_mnemonic,
       };
-      await getToken(fromWallet, amount);
-      return res.status(200).send({ msg: "Success!" });
+      try {
+        await getToken(fromWallet, amount);
+        return res.status(200).send({ msg: "Success!" });
+      } catch (err) {
+        return res.status(400).send(err.message);
+      }
     }
   );
 });

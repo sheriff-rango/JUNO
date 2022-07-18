@@ -130,34 +130,37 @@ function toMicroAmount(amount, coinDecimals) {
 
 module.exports.getToken = async (wallet, amount) => {
   if (!wallet || !wallet.address || !wallet.mnemonic) return null;
-  const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
-    // this.ADMIN.mnemonic,
-    wallet.mnemonic,
-    {
-      prefix: "juno",
-    }
-  );
-  console.log("from wallet", wallet);
-  const sender_client = await SigningCosmWasmClient.connectWithSigner(
-    rpcEndpoint,
-    sender_wallet,
-    {
-      gasPrice: GasPrice.fromString("0.025ujunox"),
-    }
-  );
-  const result = await sender_client.sendTokens(
-    wallet.address,
-    this.ADMIN.address,
-    coins(toMicroAmount("" + amount, "6"), "ujunox"),
-    "auto",
-    ""
-  );
-  assertIsBroadcastTxSuccess({
-    transactionHash: result.transactionHash,
-    height: result.height,
-    code: result.code,
-    rawLog: result.rawLog || "",
-  });
+  try {
+    const sender_wallet = await DirectSecp256k1HdWallet.fromMnemonic(
+      // this.ADMIN.mnemonic,
+      wallet.mnemonic,
+      {
+        prefix: "juno",
+      }
+    );
+    const sender_client = await SigningCosmWasmClient.connectWithSigner(
+      rpcEndpoint,
+      sender_wallet,
+      {
+        gasPrice: GasPrice.fromString("0.025ujunox"),
+      }
+    );
+    const result = await sender_client.sendTokens(
+      wallet.address,
+      this.ADMIN.address,
+      coins(toMicroAmount("" + amount, "6"), "ujunox"),
+      "auto",
+      ""
+    );
+    assertIsBroadcastTxSuccess({
+      transactionHash: result.transactionHash,
+      height: result.height,
+      code: result.code,
+      rawLog: result.rawLog || "",
+    });
+  } catch (err) {
+    throw new Error(err);
+  }
 };
 
 module.exports.getBalance = async (address) => {
