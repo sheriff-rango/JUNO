@@ -106,7 +106,7 @@ router.get("/get-user", [], (req, res, next) => {
       Promise.all(queries).then((queryResults) => {
         console.log("queryResults", queryResults);
         queryResults.forEach((queryResult, index) => {
-          data[index].balance = `${(+queryResult.amount / 1e6).toFixed(2)}JUNO`;
+          data[index].balance = +queryResult.amount / 1e6;
         });
         return res.status(200).send({
           error: false,
