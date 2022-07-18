@@ -88,6 +88,7 @@ router.get("/user", [], (req, res, next) => {
 });
 
 router.get("/get-user", [], (req, res, next) => {
+  const caller = req.header("account");
   db.query(
     "SELECT first_name, last_name, email, address, hash, isWhiteListed, whiteListedBy, isAdmin, custom_wallet_address FROM users",
     function (error, results) {
@@ -96,12 +97,14 @@ router.get("/get-user", [], (req, res, next) => {
       let data = [],
         queries = [];
       results.forEach((result) => {
-        data.push({
-          ...result,
-          isWhiteListed: !!result.isWhiteListed,
-          whiteListBy: result.whiteListedBy,
-        });
-        queries.push(getBalance(result.custom_wallet_address));
+        if (caller === ADMIN.hash || result.hash !== ADMIN.hash) {
+          data.push({
+            ...result,
+            isWhiteListed: !!result.isWhiteListed,
+            whiteListBy: result.whiteListedBy,
+          });
+          queries.push(getBalance(result.custom_wallet_address));
+        }
       });
       Promise.all(queries).then((queryResults) => {
         console.log("queryResults", queryResults);
